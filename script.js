@@ -44,6 +44,14 @@ function computeDerivedStats() {
         statHp.value = (con + conBonus) * 5;
     }
 
+    // stat_res = ceil( (attr_con + attr_con_bonus) / 2 )
+    const statRes = document.getElementById('stat_res');
+    if (statRes) {
+        const con2 = toNumber(attrCon && attrCon.value);
+        const conBonus2 = toNumber(attrConBonus && attrConBonus.value);
+        statRes.value = Math.ceil((con2 + conBonus2) / 2);
+    }
+
     // stat_def = ceil( max(attr_dist+bonus, attr_phy+bonus) / 2 )
     const attrDist = document.getElementById('attr_dist');
     const attrDistBonus = document.getElementById('attr_dist_bonus');
@@ -60,14 +68,17 @@ function computeDerivedStats() {
     }
 }
 
-// Attach listeners to keep fields in sync
-['inv_pa','inv_bp','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', computeDerivedStats);
-});
+// Attach listeners and compute derived stats once DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Attach listeners to keep fields in sync
+    ['inv_pa','inv_bp','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', computeDerivedStats);
+    });
 
-// Compute once on load
-computeDerivedStats();
+    // Compute once on load
+    computeDerivedStats();
+});
 
 // --- EXPORT JSON ---
 function exportJSON() {
