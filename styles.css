@@ -7,8 +7,8 @@
 
 /* Accessibility: increase base font size for easier reading */
 html {
-    /* 18px base (was typically 16px) — increases rem-based sizes */
-    font-size: 18px;
+    /* 20px base — readable default */
+    font-size: 20px;
 }
 
 body {
@@ -238,6 +238,15 @@ input[type=number]::-webkit-outer-spin-button {
 .attr-stepper .attr-input {
     min-width: 48px;
     max-width: 72px;
+}
+
+/* Enhance contrast for the small 'BONUS' labels in attribute boxes */
+.attr-bonus-label {
+    color: var(--holo-blue) !important;
+    font-weight: 700;
+    opacity: 1 !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 /* --- EFFET SCANLINE --- */
