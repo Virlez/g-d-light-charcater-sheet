@@ -5,6 +5,12 @@
     --glass: rgba(0, 240, 255, 0.05);
 }
 
+/* Accessibility: increase base font size for easier reading */
+html {
+    /* 18px base (was typically 16px) — increases rem-based sizes */
+    font-size: 18px;
+}
+
 body {
     background-color: #000;
     background-image: 
@@ -14,6 +20,11 @@ body {
     background-size: 100% 100%, 20px 20px, 20px 20px;
     color: #c4f0ff;
     font-family: 'Rajdhani', sans-serif;
+}
+
+/* Ensure form controls are at least readable size */
+input, textarea, select, button {
+    font-size: 1rem; /* equals 18px due to html font-size above */
 }
 
 h1, h2, h3, .header-font {
