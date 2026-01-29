@@ -200,6 +200,10 @@ function importJSON(inputElement) {
             }
 
             alert("Fiche chargée avec succès !");
+            // Expand all textareas to fit their content
+            document.querySelectorAll('textarea').forEach(textarea => {
+                autoExpandTextarea(textarea);
+            });
         } catch (err) {
             console.error(err);
             alert("Erreur lors de la lecture du fichier JSON.");
