@@ -12,9 +12,12 @@ if (imgInput) {
                 currentImageData = e.target.result;
                 imgPreview.style.backgroundImage = `url(${currentImageData})`;
                 imgPreview.classList.remove('hidden');
-                // Hide photo label when image is loaded
+                // Hide photo label text when image is loaded, but keep the clickable area visible
                 const photoLabel = imgInput.closest('.section-box')?.querySelector('label[for="imgUpload"]');
-                if (photoLabel) photoLabel.classList.add('hidden');
+                if (photoLabel) {
+                    const textDiv = photoLabel.querySelector('div');
+                    if (textDiv) textDiv.classList.add('hidden');
+                }
             }
             reader.readAsDataURL(file);
         }
@@ -208,8 +211,12 @@ function resetImage() {
     imgPreview.style.backgroundImage = '';
     imgPreview.classList.add('hidden');
     if (imgInput) imgInput.value = '';
-    // Show photo label again when image is reset
+    // Show photo label text again when image is reset
     const photoLabel = imgInput?.closest('.section-box')?.querySelector('label[for="imgUpload"]');
-    if (photoLabel) photoLabel.classList.remove('hidden');
-} 
+    if (photoLabel) {
+        const textDiv = photoLabel.querySelector('div');
+        if (textDiv) textDiv.classList.remove('hidden');
+    }
+}
+
 
