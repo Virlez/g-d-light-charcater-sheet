@@ -275,6 +275,59 @@ function initSheet() {
         document.querySelectorAll('.weapon-item').forEach(item => wireWeaponRow(item));
     } catch (e) {}
 
+    // Add small +/- steppers to base attribute inputs for easier editing
+    try {
+        const baseAttrs = ['attr_con','attr_str','attr_phy','attr_dist','attr_know','attr_soc','attr_pilot','attr_expl'];
+        baseAttrs.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            // Avoid adding multiple steppers if already added
+            if (el.dataset.stepper === '1') return;
+
+            // Create wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'attr-stepper';
+
+            const dec = document.createElement('button');
+            dec.type = 'button';
+            dec.className = 'attr-dec';
+            dec.title = 'Décrémenter';
+            dec.textContent = '−';
+
+            const inc = document.createElement('button');
+            inc.type = 'button';
+            inc.className = 'attr-inc';
+            inc.title = 'Incrémenter';
+            inc.textContent = '+';
+
+            // Adjust input appearance for stepper
+            el.classList.add('attr-input');
+            // Place elements: dec, input, inc
+            el.parentNode && el.parentNode.replaceChild(wrapper, el);
+            wrapper.appendChild(dec);
+            wrapper.appendChild(el);
+            wrapper.appendChild(inc);
+
+            // mark as processed
+            el.dataset.stepper = '1';
+
+            const stepFn = (delta) => {
+                const cur = toNumber(el.value);
+                const step = (window.event && window.event.shiftKey) ? 5 : 1;
+                const next = Math.max(0, cur + delta * step);
+                el.value = next;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            };
+
+            dec.addEventListener('click', function(e) { stepFn(-1); });
+            inc.addEventListener('click', function(e) { stepFn(1); });
+        });
+    } catch (e) {
+        // silent
+    }
+
     // Compute once on load
     computeDerivedStats();
 

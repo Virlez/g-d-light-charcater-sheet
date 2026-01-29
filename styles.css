@@ -212,6 +212,34 @@ input[type=number]::-webkit-outer-spin-button {
     margin: 0; 
 }
 
+/* Small steppers for attribute inputs */
+.attr-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.attr-stepper button {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    background: #002e33;
+    color: var(--holo-blue);
+    border: 1px solid var(--holo-dim);
+    padding: 0;
+}
+.attr-stepper button:hover {
+    background: rgba(0,240,255,0.06);
+    color: black;
+}
+.attr-stepper .attr-input {
+    min-width: 48px;
+    max-width: 72px;
+}
+
 /* --- EFFET SCANLINE --- */
 .scanline {
     width: 100%;
