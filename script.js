@@ -42,10 +42,10 @@ function renderWeapon(data = {}) {
             <option value="dist">Distance</option>
         </select>
         <input type="number" class="weapon-bonus w-full p-1 text-xs text-right" value="0" step="1" min="0">
-        <div class="flex items-center gap-2">
+        <div class="flex flex-col w-full">
             <input type="number" class="weapon-total w-full p-1 text-xs bg-transparent text-right" value="0" readonly>
-            <button type="button" class="weapon-delete text-xs bg-[#002e33] hover:bg-red-900 hover:text-red-500 text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">-</button>
         </div>
+        <button type="button" class="weapon-delete text-xs bg-[#002e33] hover:bg-red-900 hover:text-red-500 text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">-</button>
     `;
     container.appendChild(weaponItem);
 
