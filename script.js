@@ -47,8 +47,8 @@ if (imgInput) {
                 currentImageData = e.target.result;
                 imgPreview.style.backgroundImage = `url(${currentImageData})`;
                 imgPreview.classList.remove('hidden');
-                // Hide photo label text when image is loaded, but keep the clickable area visible
-                const photoLabel = imgInput.closest('.section-box')?.querySelector('label[for="imgUpload"]');
+                // Hide photo label text when image is loaded, but keep the label clickable for changing
+                const photoLabel = imgInput.closest('div')?.querySelector('label[for="imgUpload"]');
                 if (photoLabel) {
                     const textDiv = photoLabel.querySelector('div');
                     if (textDiv) textDiv.classList.add('hidden');
@@ -255,8 +255,8 @@ function importJSON(inputElement) {
                 currentImageData = data['char_image_data'];
                 imgPreview.style.backgroundImage = `url(${currentImageData})`;
                 imgPreview.classList.remove('hidden');
-                // Hide photo label text when image is loaded from JSON
-                const photoLabel = imgInput.closest('.section-box')?.querySelector('label[for="imgUpload"]');
+                // Hide photo label text when image is loaded from JSON, but keep label clickable
+                const photoLabel = imgInput.closest('div')?.querySelector('label[for="imgUpload"]');
                 if (photoLabel) {
                     const textDiv = photoLabel.querySelector('div');
                     if (textDiv) textDiv.classList.add('hidden');
@@ -315,11 +315,12 @@ function resetImage() {
     imgPreview.classList.add('hidden');
     if (imgInput) imgInput.value = '';
     // Show photo label text again when image is reset
-    const photoLabel = imgInput?.closest('.section-box')?.querySelector('label[for="imgUpload"]');
+    const photoLabel = imgInput?.closest('div')?.querySelector('label[for="imgUpload"]');
     if (photoLabel) {
         const textDiv = photoLabel.querySelector('div');
         if (textDiv) textDiv.classList.remove('hidden');
     }
 }
+
 
 

@@ -198,9 +198,17 @@
 
                     <!-- Clickable label covers the whole area and opens file dialog -->
                     <label for="imgUpload" class="absolute inset-0 z-20 flex items-center justify-center cursor-pointer">
-                        <div class="text-center pointer-events-none">
-                            <span class="text-3xl block text-[#004e53] mb-1"></span>
-                            <span class="text-xs text-[#00f0ff] uppercase tracking-widest">Photo</span>
+                        <div class="placeholder-content pointer-events-none">
+                            <!-- Datapad-style placeholder icon -->
+                            <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" class="placeholder-icon pulse">
+                                <rect x="6" y="8" width="52" height="40" rx="4" class="frame accent" fill="currentColor" opacity="0.04" stroke="none"></rect>
+                                <rect x="14" y="16" width="36" height="6" rx="1" class="accent" opacity="0.06"></rect>
+                                <rect x="14" y="26" width="24" height="4" rx="1" class="accent" opacity="0.04"></rect>
+                                <rect x="14" y="32" width="28" height="4" rx="1" class="accent" opacity="0.04"></rect>
+                                <circle cx="48" cy="22" r="2" class="accent"></circle>
+                                <rect x="10" y="52" width="44" height="2" rx="1" class="accent" opacity="0.08"></rect>
+                            </svg>
+                            <span class="placeholder-text">Photo</span>
                         </div>
                     </label>
                 </div>
