@@ -136,6 +136,18 @@ function importJSON(inputElement) {
         try {
             const data = JSON.parse(e.target.result);
 
+            // 0. Clear all fields before importing
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.type === 'file') return;
+                
+                if (el.type === 'radio' || el.type === 'checkbox') {
+                    el.checked = false;
+                } else {
+                    el.value = '';
+                }
+            });
+            resetImage();
+
             // 1. Restaurer les champs
             for (const [key, value] of Object.entries(data)) {
                 if (key === 'char_image_data') continue; 
