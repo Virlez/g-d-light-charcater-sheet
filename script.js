@@ -144,7 +144,8 @@ function computeDerivedStats() {
 }
 
 // Attach listeners and compute derived stats once DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+// Initialization routine: attach listeners and set initial visibility/state.
+function initSheet() {
     // Attach listeners to keep fields in sync
     ['inv_pa','inv_bp','inv_shield','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus'].forEach(id => {
         const el = document.getElementById(id);
@@ -227,7 +228,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Apply initial calculation (if any)
     updateInvPA();
-});
+}
+
+document.addEventListener('DOMContentLoaded', initSheet);
+// If the script is loaded after DOMContentLoaded already fired, run init immediately.
+if (document.readyState !== 'loading') {
+    initSheet();
+}
 
 // Ensure inventory row adjusts when updateInvPA is called externally (import etc.)
 // updateInvPA already handles most of the PA logic — keep visibility in sync here.
@@ -439,10 +446,25 @@ function resetSheet() {
         }
     });
 
+    // Ensure armor type explicitly resets to 'none' (Aucune) and update layout
+    try {
+        const armorSelect = document.getElementById('armor_type');
+        const exoticContainer = document.getElementById('armor_exotic_container');
+        const inventoryRow = document.getElementById('inventory_row');
+        if (armorSelect) {
+            armorSelect.value = 'none';
+        }
+        if (exoticContainer) exoticContainer.classList.add('hidden');
+        if (inventoryRow) inventoryRow.classList.add('inventory--checkbox-hidden');
+    } catch (e) {
+        // ignore if elements not present
+    }
+
     // 2. Reset Image
     resetImage();
-    // Recompute derived stats after reset
-    computeDerivedStats();
+    // Recompute derived stats after reset (prefer updateInvPA if available)
+    if (typeof updateInvPA === 'function') updateInvPA();
+    else computeDerivedStats();
 }
 
 function resetImage() {
