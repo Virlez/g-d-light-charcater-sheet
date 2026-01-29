@@ -259,6 +259,11 @@ function computeDerivedStats() {
 
     // Recompute weapon totals whenever derived stats (attributes) change
     if (typeof computeAllWeaponTotals === 'function') computeAllWeaponTotals();
+
+    // Recompute the Force Attack talent line if present
+    try {
+        computeForceAttack();
+    } catch (e) {}
 }
 
 // Attach listeners and compute derived stats once DOM is ready
@@ -417,6 +422,42 @@ function initSheet() {
     }
     // Apply initial calculation (if any)
     updateInvPA();
+
+    // Wire Force talent controls: show/hide and compute
+    try {
+        const forceYes = document.getElementById('force_yes');
+        const forceNo = document.getElementById('force_no');
+        const bonusEl = document.getElementById('talent_force_bonus');
+        if (forceYes) forceYes.addEventListener('change', computeForceAttack);
+        if (forceNo) forceNo.addEventListener('change', computeForceAttack);
+        if (bonusEl) {
+            bonusEl.addEventListener('input', computeForceAttack);
+            bonusEl.addEventListener('change', computeForceAttack);
+        }
+        // Compute initial state
+        computeForceAttack();
+    } catch (e) {}
+}
+
+// Compute the Attaque de Force talent line
+function computeForceAttack() {
+    const isForceUser = document.getElementById('force_yes')?.checked;
+    const row = document.getElementById('talent_force_row');
+    if (!row) return;
+    // Show row only when user is force-capable
+    if (isForceUser) row.classList.remove('hidden'); else row.classList.add('hidden');
+
+    if (!isForceUser) return;
+
+    const str = toNumber(document.getElementById('attr_str')?.value);
+    const strBonus = toNumber(document.getElementById('attr_str_bonus')?.value);
+    const base = (str * 2) + strBonus;
+    const baseEl = document.getElementById('talent_force_base');
+    const bonusEl = document.getElementById('talent_force_bonus');
+    const totalEl = document.getElementById('talent_force_total');
+    if (baseEl) baseEl.value = base;
+    const bonus = toNumber(bonusEl?.value);
+    if (totalEl) totalEl.value = base + bonus;
 }
 
 document.addEventListener('DOMContentLoaded', initSheet);

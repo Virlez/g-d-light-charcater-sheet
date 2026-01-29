@@ -294,6 +294,20 @@
                     <span>Talents & Capacités</span>
                 </h2>
                 <textarea id="talents" class="w-full h-screen bg-transparent border border-[#004e53] p-2 text-base leading-relaxed text-[#c4f0ff] focus:bg-[#00141a]" placeholder="Listez vos talents ici..."></textarea>
+
+                <div id="talent_force_row" class="mb-3 hidden">
+                    <label class="block text-sm text-gray-400 mb-1">Attaque de Force</label>
+                    <div class="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-1">
+                        <div class="text-center">Base</div>
+                        <div class="text-center">Bonus</div>
+                        <div class="text-center">Total</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 items-center">
+                        <input id="talent_force_base" type="number" readonly class="w-full p-1 text-center bg-transparent border border-[#004e53] text-base" placeholder="Base">
+                        <input id="talent_force_bonus" type="number" value="0" class="w-full p-1 text-center border border-[#004e53] text-base" placeholder="Bonus">
+                        <input id="talent_force_total" type="number" readonly class="w-full p-1 text-center bg-transparent border border-[#004e53] text-base" placeholder="Total">
+                    </div>
+                </div>
             </section>
 
             <section class="section-box p-3 clip-corner-inv">
