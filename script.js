@@ -15,22 +15,95 @@ document.querySelectorAll('textarea').forEach(textarea => {
 
 // --- WEAPONS MANAGEMENT ---
 function addWeapon() {
-    const container = document.getElementById('weapons-container');
-    const weaponItem = document.createElement('div');
-    weaponItem.className = 'weapon-item flex gap-1';
-    weaponItem.innerHTML = `
-        <input type="text" class="weapon-input w-full p-1 text-xs" placeholder="Arme">
-        <button onclick="deleteWeapon(this)" type="button" class="text-xs bg-[#002e33] hover:bg-red-900 hover:text-red-500 text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">-</button>
-    `;
-    container.appendChild(weaponItem);
+    renderWeapon();
 }
 
 function deleteWeapon(button) {
     const container = document.getElementById('weapons-container');
+    const item = button.closest('.weapon-item');
+    if (!item) return;
     // Don't delete if it's the last weapon
     if (container.querySelectorAll('.weapon-item').length > 1) {
-        button.parentElement.remove();
+        item.remove();
+        computeAllWeaponTotals();
     }
+}
+
+// Create and append a weapon row. Accepts optional data: {name, base, attr, bonus}
+function renderWeapon(data = {}) {
+    const container = document.getElementById('weapons-container');
+    const weaponItem = document.createElement('div');
+    weaponItem.className = 'weapon-item grid grid-cols-5 gap-2 items-center';
+    weaponItem.innerHTML = `
+        <input type="text" class="weapon-name w-full p-1 text-xs" placeholder="Nom arme">
+        <input type="number" class="weapon-base w-full p-1 text-xs text-right" value="0" min="0">
+        <select class="weapon-attr w-full p-1 text-xs">
+            <option value="phy">Physique</option>
+            <option value="dist">Distance</option>
+        </select>
+        <input type="number" class="weapon-bonus w-full p-1 text-xs text-right" value="0" step="1" min="0">
+        <div class="flex items-center gap-2">
+            <input type="number" class="weapon-total w-full p-1 text-xs bg-transparent text-right" value="0" readonly>
+            <button type="button" class="weapon-delete text-xs bg-[#002e33] hover:bg-red-900 hover:text-red-500 text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">-</button>
+        </div>
+    `;
+    container.appendChild(weaponItem);
+
+    // Populate defaults
+    const nameEl = weaponItem.querySelector('.weapon-name');
+    const baseEl = weaponItem.querySelector('.weapon-base');
+    const attrEl = weaponItem.querySelector('.weapon-attr');
+    const bonusEl = weaponItem.querySelector('.weapon-bonus');
+    const totalEl = weaponItem.querySelector('.weapon-total');
+    const delBtn = weaponItem.querySelector('.weapon-delete');
+
+    if (data.name) nameEl.value = data.name;
+    if (typeof data.base !== 'undefined') baseEl.value = data.base;
+    if (data.attr) attrEl.value = data.attr;
+    if (typeof data.bonus !== 'undefined') bonusEl.value = data.bonus;
+
+    // wire events
+    [nameEl, baseEl, attrEl, bonusEl].forEach(el => {
+        el.addEventListener('input', computeAllWeaponTotals);
+        el.addEventListener('change', computeAllWeaponTotals);
+    });
+    delBtn.addEventListener('click', function() { deleteWeapon(this); });
+
+    // initial total
+    computeAllWeaponTotals();
+    // no debug calc displayed
+}
+
+// Wire an existing weapon-item element so its inputs trigger recalculation
+function wireWeaponRow(item) {
+    if (!item) return;
+    const nameEl = item.querySelector('.weapon-name');
+    const baseEl = item.querySelector('.weapon-base');
+    const attrEl = item.querySelector('.weapon-attr');
+    const bonusEl = item.querySelector('.weapon-bonus');
+    const delBtn = item.querySelector('.weapon-delete');
+
+    [nameEl, baseEl, attrEl, bonusEl].forEach(el => {
+        if (!el) return;
+        el.addEventListener('input', computeAllWeaponTotals);
+        el.addEventListener('change', computeAllWeaponTotals);
+    });
+    if (delBtn) delBtn.addEventListener('click', function() { deleteWeapon(this); });
+    // no debug calc to attach
+}
+
+function computeAllWeaponTotals() {
+    const phyTotal = toNumber(document.getElementById('attr_phy')?.value) + toNumber(document.getElementById('attr_phy_bonus')?.value);
+    const distTotal = toNumber(document.getElementById('attr_dist')?.value) + toNumber(document.getElementById('attr_dist_bonus')?.value);
+    document.querySelectorAll('.weapon-item').forEach(item => {
+        const base = toNumber(item.querySelector('.weapon-base')?.value);
+        const attr = item.querySelector('.weapon-attr')?.value || 'phy';
+        const bonus = toNumber(item.querySelector('.weapon-bonus')?.value);
+        const totalEl = item.querySelector('.weapon-total');
+        const attrVal = attr === 'dist' ? distTotal : phyTotal;
+        const total = base + attrVal + bonus;
+        if (totalEl) totalEl.value = total;
+    });
 }
 
 // --- LOGIQUE IMAGE PREVIEW ---
@@ -164,6 +237,8 @@ function computeDerivedStats() {
         const initVal = Math.max(0, higherCE - malus);
         statInit.value = initVal;
     }
+    // Recompute weapon totals whenever derived stats (attributes) change
+    if (typeof computeAllWeaponTotals === 'function') computeAllWeaponTotals();
 }
 
 // Attach listeners and compute derived stats once DOM is ready
@@ -174,6 +249,11 @@ function initSheet() {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', computeDerivedStats);
     });
+
+    // Wire any pre-existing weapon rows present in the HTML so their inputs trigger recalculation
+    try {
+        document.querySelectorAll('.weapon-item').forEach(item => wireWeaponRow(item));
+    } catch (e) {}
 
     // Compute once on load
     computeDerivedStats();
@@ -285,6 +365,9 @@ if (_originalUpdateInvPA) {
 
 // --- EXPORT JSON ---
 function exportJSON() {
+    // Ensure all derived values (weapon totals, stats) are up-to-date before export
+    try { if (typeof computeAllWeaponTotals === 'function') computeAllWeaponTotals(); } catch(e) {}
+    try { if (typeof computeDerivedStats === 'function') computeDerivedStats(); } catch(e) {}
     const data = {};
     // Sélectionne tous les éléments qui ont un ID pertinent
     document.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
@@ -300,14 +383,18 @@ function exportJSON() {
         }
     });
 
-    // Ajoute les armes dynamiques
+    // Ajoute les armes dynamiques (structured)
     const weapons = [];
-    document.querySelectorAll('.weapon-input').forEach(input => {
-        if (input.value) weapons.push(input.value);
+    document.querySelectorAll('.weapon-item').forEach(item => {
+        const name = item.querySelector('.weapon-name')?.value || '';
+        const base = toNumber(item.querySelector('.weapon-base')?.value);
+        const attr = item.querySelector('.weapon-attr')?.value || 'phy';
+        const bonus = toNumber(item.querySelector('.weapon-bonus')?.value);
+        const total = toNumber(item.querySelector('.weapon-total')?.value);
+        // Include even if name is empty to preserve structure
+        weapons.push({ name, base, attr, bonus, total });
     });
-    if (weapons.length > 0) {
-        data['weapons'] = weapons;
-    }
+    if (weapons.length > 0) data['weapons'] = weapons;
 
     // Ajoute l'image si présente
     if (currentImageData) {
@@ -375,38 +462,23 @@ function importJSON(inputElement) {
             // 1.5 Restaurer les armes dynamiques
             if (data['weapons'] && Array.isArray(data['weapons'])) {
                 const container = document.getElementById('weapons-container');
-                // Clear existing weapons except the first one
-                const items = container.querySelectorAll('.weapon-item');
-                for (let i = items.length - 1; i > 0; i--) {
-                    items[i].remove();
-                }
-                // Set the first weapon
-                const firstInput = container.querySelector('.weapon-input');
-                if (firstInput && data['weapons'][0]) {
-                    firstInput.value = data['weapons'][0];
-                }
-                // Add remaining weapons
-                for (let i = 1; i < data['weapons'].length; i++) {
-                    addWeapon();
-                    const lastInput = container.querySelector('.weapon-item:last-child .weapon-input');
-                    if (lastInput) lastInput.value = data['weapons'][i];
-                }
+                // Clear existing weapons
+                container.innerHTML = '';
+                // Recreate weapons from structured data
+                data['weapons'].forEach(w => {
+                    if (typeof w === 'string') {
+                        // legacy string entry -> name only
+                        renderWeapon({ name: w, base: 0, attr: 'phy', bonus: 0 });
+                    } else {
+                        renderWeapon({ name: w.name || '', base: w.base || 0, attr: w.attr || 'phy', bonus: w.bonus || 0 });
+                    }
+                });
             } else if (data['wep_main'] || data['wep_sec']) {
                 // Backward compatibility: convert old wep_main/wep_sec to new weapons array
                 const container = document.getElementById('weapons-container');
-                const items = container.querySelectorAll('.weapon-item');
-                for (let i = items.length - 1; i > 0; i--) {
-                    items[i].remove();
-                }
-                const firstInput = container.querySelector('.weapon-input');
-                if (firstInput) {
-                    firstInput.value = data['wep_main'] || '';
-                }
-                if (data['wep_sec']) {
-                    addWeapon();
-                    const lastInput = container.querySelector('.weapon-item:last-child .weapon-input');
-                    if (lastInput) lastInput.value = data['wep_sec'];
-                }
+                container.innerHTML = '';
+                if (data['wep_main']) renderWeapon({ name: data['wep_main'], base: 0, attr: 'phy', bonus: 0 });
+                if (data['wep_sec']) renderWeapon({ name: data['wep_sec'], base: 0, attr: 'phy', bonus: 0 });
             }
 
             // 2. Restaurer l'image
@@ -485,6 +557,14 @@ function resetSheet() {
 
     // 2. Reset Image
     resetImage();
+    // Ensure weapons area resets to a single empty weapon row
+    try {
+        const container = document.getElementById('weapons-container');
+        if (container) {
+            container.innerHTML = '';
+            renderWeapon();
+        }
+    } catch (e) {}
     // Recompute derived stats after reset (prefer updateInvPA if available)
     if (typeof updateInvPA === 'function') updateInvPA();
     else computeDerivedStats();

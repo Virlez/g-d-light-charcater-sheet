@@ -310,10 +310,26 @@
                         <label class="text-[12px] text-gray-400 block">Armes</label>
                         <button onclick="addWeapon()" type="button" class="text-xs bg-[#002e33] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">+</button>
                     </div>
+                    <div class="weapons-headers grid grid-cols-5 gap-2 mb-1 text-[12px] text-gray-400">
+                        <div class="text-left">Nom</div>
+                        <div class="text-left">Base</div>
+                        <div class="text-left">Attribut</div>
+                        <div class="text-left">Bonus</div>
+                        <div class="text-left">Total</div>
+                    </div>
                     <div id="weapons-container" class="space-y-1">
-                        <div class="weapon-item flex gap-1">
-                            <input type="text" class="weapon-input w-full p-1 text-xs" placeholder="Arme Principale">
-                            <button onclick="deleteWeapon(this)" type="button" class="text-xs bg-[#002e33] hover:bg-red-900 hover:text-red-500 text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">-</button>
+                        <div class="weapon-item grid grid-cols-5 gap-2 items-center">
+                            <input type="text" class="weapon-name w-full p-1 text-xs" placeholder="Nom arme">
+                            <input type="number" class="weapon-base w-full p-1 text-xs text-right" value="0" min="0">
+                            <select class="weapon-attr w-full p-1 text-xs">
+                                <option value="phy">Physique</option>
+                                <option value="dist">Distance</option>
+                            </select>
+                            <input type="number" class="weapon-bonus w-full p-1 text-xs text-right" value="0" step="1" min="0">
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="weapon-total w-full p-1 text-xs bg-transparent text-right" value="0" readonly>
+                                <button onclick="deleteWeapon(this)" type="button" class="text-xs bg-[#002e33] hover:bg-red-900 hover:text-red-500 text-[#00f0ff] px-2 py-1 rounded clip-corner transition-colors">-</button>
+                            </div>
                         </div>
                     </div>
                 </div>
