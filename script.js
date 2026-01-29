@@ -167,15 +167,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 // clear PA when 'Aucune' is selected
                 invPaEl.dataset.base = '';
                 invPaEl.value = '';
+                // hide exotic checkbox when none is selected
+                const exoticContainer = document.getElementById('armor_exotic_container');
+                const inventoryRow = document.getElementById('inventory_row');
+                if (exoticContainer) exoticContainer.classList.add('hidden');
+                if (inventoryRow) inventoryRow.classList.add('inventory--checkbox-hidden');
                 computeDerivedStats();
             } else {
                 invPaEl.dataset.base = armorSelect.value || '';
                 updateInvPA();
+                // show exotic checkbox when a real armor is selected
+                const exoticContainer = document.getElementById('armor_exotic_container');
+                const inventoryRow = document.getElementById('inventory_row');
+                if (exoticContainer) exoticContainer.classList.remove('hidden');
+                if (inventoryRow) inventoryRow.classList.remove('inventory--checkbox-hidden');
             }
         });
-        // apply on load if a selection is present
+        // apply on load if a selection is present and set exotic visibility
         if (armorSelect.value) {
             invPaEl && (invPaEl.dataset.base = armorSelect.value);
+        }
+        // initial show/hide of exotic checkbox
+        const exoticContainerInit = document.getElementById('armor_exotic_container');
+        if (exoticContainerInit) {
+            const inventoryRowInit = document.getElementById('inventory_row');
+            if (armorSelect.value === 'none' || !armorSelect.value) {
+                exoticContainerInit.classList.add('hidden');
+                if (inventoryRowInit) inventoryRowInit.classList.add('inventory--checkbox-hidden');
+            } else {
+                exoticContainerInit.classList.remove('hidden');
+                if (inventoryRowInit) inventoryRowInit.classList.remove('inventory--checkbox-hidden');
+            }
         }
     }
 
@@ -206,6 +228,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply initial calculation (if any)
     updateInvPA();
 });
+
+// Ensure inventory row adjusts when updateInvPA is called externally (import etc.)
+// updateInvPA already handles most of the PA logic — keep visibility in sync here.
+const _originalUpdateInvPA = typeof updateInvPA === 'function' ? updateInvPA : null;
+if (_originalUpdateInvPA) {
+    // wrap it so calls also sync the inventory row class based on armor select
+    window.updateInvPA = function() {
+        _originalUpdateInvPA();
+        try {
+            const armorSelect = document.getElementById('armor_type');
+            const exoticContainer = document.getElementById('armor_exotic_container');
+            const inventoryRow = document.getElementById('inventory_row');
+            if (armorSelect && armorSelect.value === 'none') {
+                if (exoticContainer) exoticContainer.classList.add('hidden');
+                if (inventoryRow) inventoryRow.classList.add('inventory--checkbox-hidden');
+            } else {
+                if (exoticContainer) exoticContainer.classList.remove('hidden');
+                if (inventoryRow) inventoryRow.classList.remove('inventory--checkbox-hidden');
+            }
+        } catch (e) {
+            // silent fallback
+        }
+    }
+}
 
 // --- EXPORT JSON ---
 function exportJSON() {

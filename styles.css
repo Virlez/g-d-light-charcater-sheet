@@ -272,3 +272,11 @@ input[type=number]::-webkit-outer-spin-button {
     .bg-black\/30 { background: white !important; }
     .bg-\[\#00141a\] { background: white !important; }
 }
+
+/* When the exotic checkbox is hidden we want the inventory row to reflow
+   so the remaining fields get more horizontal space on medium+ screens. */
+@media (min-width: 768px) {
+    #inventory_row.inventory--checkbox-hidden {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
