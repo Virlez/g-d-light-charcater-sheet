@@ -242,6 +242,21 @@ function computeDerivedStats() {
         const initVal = Math.max(0, higherCE - malus);
         statInit.value = initVal;
     }
+
+    // --- Calcul dynamique du niveau ---
+    // Niveau = somme de tous les attributs (sans les bonus) - 17, min 0
+    const statLvl = document.getElementById('stat_lvl');
+    if (statLvl) {
+        const baseAttrs = ['attr_con','attr_str','attr_phy','attr_dist','attr_know','attr_soc','attr_pilot','attr_expl'];
+        let sum = 0;
+        baseAttrs.forEach(aid => {
+            const ael = document.getElementById(aid);
+            if (ael) sum += toNumber(ael.value);
+        });
+        const lvl = Math.max(0, sum - 17);
+        statLvl.value = lvl;
+    }
+
     // Recompute weapon totals whenever derived stats (attributes) change
     if (typeof computeAllWeaponTotals === 'function') computeAllWeaponTotals();
 }
@@ -250,7 +265,7 @@ function computeDerivedStats() {
 // Initialization routine: attach listeners and set initial visibility/state.
 function initSheet() {
     // Attach listeners to keep fields in sync
-    ['inv_pa','inv_bp','inv_shield','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus','attr_expl','attr_expl_bonus'].forEach(id => {
+    ['inv_pa','inv_bp','inv_shield','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus','attr_expl','attr_expl_bonus','attr_str','attr_know','attr_soc','attr_pilot'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', computeDerivedStats);
     });
