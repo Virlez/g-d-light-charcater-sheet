@@ -39,9 +39,10 @@ function renderWeapon(data = {}) {
         <input type="text" class="weapon-name w-full p-1 text-xs" placeholder="Nom arme">
         <input type="number" class="weapon-base w-full p-1 text-xs text-right" value="0" min="0">
         <select class="weapon-attr w-full p-1 text-xs">
-            <option value="phy">Physique</option>
-            <option value="dist">Distance</option>
-        </select>
+                <option value="none">Aucun</option>
+                <option value="phy">Physique</option>
+                <option value="dist">Distance</option>
+            </select>
         <input type="number" class="weapon-bonus w-full p-1 text-xs text-right" value="0" step="1" min="0">
         <div class="flex items-center gap-2">
             <input type="number" class="weapon-total w-full p-1 text-xs bg-transparent text-right" value="0" readonly>
@@ -101,7 +102,10 @@ function computeAllWeaponTotals() {
         const attr = item.querySelector('.weapon-attr')?.value || 'phy';
         const bonus = toNumber(item.querySelector('.weapon-bonus')?.value);
         const totalEl = item.querySelector('.weapon-total');
-        const attrVal = attr === 'dist' ? distTotal : phyTotal;
+        let attrVal = 0;
+        if (attr === 'dist') attrVal = distTotal;
+        else if (attr === 'phy') attrVal = phyTotal;
+        else attrVal = 0; // 'none' or unknown => contributes 0
         const total = base + attrVal + bonus;
         if (totalEl) totalEl.value = total;
     });
