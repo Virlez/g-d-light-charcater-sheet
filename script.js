@@ -312,17 +312,30 @@ function initSheet() {
             // mark as processed
             el.dataset.stepper = '1';
 
-            const stepFn = (delta) => {
+            // clamp function
+            const clampValue = (v) => {
+                const n = Number(v);
+                if (!Number.isFinite(n)) return 0;
+                return Math.min(Math.max(0, Math.round(n)), 7);
+            };
+
+            const stepFn = (delta, ev) => {
                 const cur = toNumber(el.value);
-                const step = (window.event && window.event.shiftKey) ? 5 : 1;
-                const next = Math.max(0, cur + delta * step);
+                const step = (ev && ev.shiftKey) ? 5 : 1;
+                const next = clampValue(cur + delta * step);
                 el.value = next;
                 el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.dispatchEvent(new Event('change', { bubbles: true }));
             };
 
-            dec.addEventListener('click', function(e) { stepFn(-1); });
-            inc.addEventListener('click', function(e) { stepFn(1); });
+            // clamp on manual input as well
+            el.addEventListener('input', function() {
+                const clamped = clampValue(this.value);
+                if (String(this.value) !== String(clamped)) this.value = clamped;
+            });
+
+            dec.addEventListener('click', function(e) { stepFn(-1, e); });
+            inc.addEventListener('click', function(e) { stepFn(1, e); });
         });
     } catch (e) {
         // silent
@@ -512,6 +525,7 @@ function importJSON(inputElement) {
             resetImage();
 
             // 1. Restaurer les champs
+            const baseAttrs = ['attr_con','attr_str','attr_phy','attr_dist','attr_know','attr_soc','attr_pilot','attr_expl'];
             for (const [key, value] of Object.entries(data)) {
                 if (key === 'char_image_data' || key === 'weapons') continue; 
                 
@@ -527,7 +541,13 @@ function importJSON(inputElement) {
                     if (el.type === 'checkbox') {
                         el.checked = value;
                     } else {
-                        el.value = value;
+                        // If this is a base attribute, enforce max value 7 on import
+                        if (baseAttrs.includes(key)) {
+                            const n = Number(value);
+                            el.value = String(Number.isFinite(n) ? Math.min(Math.max(0, n), 7) : 0);
+                        } else {
+                            el.value = value;
+                        }
                     }
                 }
             }
