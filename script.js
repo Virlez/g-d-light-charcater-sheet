@@ -141,13 +141,36 @@ function computeDerivedStats() {
         const higher = Math.max(dist + distBonus, phy + phyBonus);
         statDef.value = Math.ceil(higher / 2);
     }
+
+    // stat_init = higher of (attr_con + attr_con_bonus) and (attr_expl + attr_expl_bonus)
+    // minus armor malus: none=0, légère=0, intermédiaire=1, lourde=2
+    const statInit = document.getElementById('stat_init');
+    if (statInit) {
+        const conTotal = toNumber(attrCon && attrCon.value) + toNumber(attrConBonus && attrConBonus.value);
+        const attrExpl = document.getElementById('attr_expl');
+        const attrExplBonus = document.getElementById('attr_expl_bonus');
+        const explTotal = toNumber(attrExpl && attrExpl.value) + toNumber(attrExplBonus && attrExplBonus.value);
+        const higherCE = Math.max(conTotal, explTotal);
+
+        let malus = 0;
+        const armorSelect = document.getElementById('armor_type');
+        if (armorSelect) {
+            const v = String(armorSelect.value || 'none');
+            if (v === '60') malus = 1; // Intermédiaire
+            else if (v === '80') malus = 2; // Lourde
+            else malus = 0; // 'none' or '40' (Légère) => 0
+        }
+
+        const initVal = Math.max(0, higherCE - malus);
+        statInit.value = initVal;
+    }
 }
 
 // Attach listeners and compute derived stats once DOM is ready
 // Initialization routine: attach listeners and set initial visibility/state.
 function initSheet() {
     // Attach listeners to keep fields in sync
-    ['inv_pa','inv_bp','inv_shield','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus'].forEach(id => {
+    ['inv_pa','inv_bp','inv_shield','attr_con','attr_con_bonus','attr_dist','attr_dist_bonus','attr_phy','attr_phy_bonus','attr_expl','attr_expl_bonus'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', computeDerivedStats);
     });
