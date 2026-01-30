@@ -732,19 +732,118 @@ async function exportScreenshotPDF() {
         // Wait a tick so styles apply
         await new Promise(r => setTimeout(r, 50));
 
-        // Use html2canvas to render the full element (including parts outside viewport)
+        // Instead of capturing the live DOM (which can render inputs poorly),
+        // create a visual clone where interactive form controls are replaced
+        // with static, high-contrast elements. Render that clone with html2canvas.
+        const clone = target.cloneNode(true);
+
+        // Normalize styles on the clone to improve readability
+        clone.style.background = window.getComputedStyle(target).backgroundColor || '#001111';
+        clone.style.boxSizing = 'border-box';
+        clone.style.padding = window.getComputedStyle(target).padding || '12px';
+        clone.style.width = target.scrollWidth + 'px';
+        clone.style.height = target.scrollHeight + 'px';
+
+        // Replace form controls in clone with static elements showing their values
+        const replaceWithText = (el, text) => {
+            const span = document.createElement('div');
+            span.textContent = text;
+            span.style.background = '#00141a';
+            span.style.color = '#00f0ff';
+            span.style.padding = '6px 8px';
+            span.style.border = '1px solid rgba(0,240,255,0.12)';
+            span.style.fontWeight = '700';
+            span.style.fontFamily = window.getComputedStyle(el).fontFamily || 'Rajdhani, sans-serif';
+            // make the text slightly larger for small UI elements
+            const baseFont = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+            span.style.fontSize = (baseFont >= 16 ? baseFont : 14) + 'px';
+            span.style.lineHeight = '1.1';
+            span.style.minHeight = (el.offsetHeight || 20) + 'px';
+            span.style.boxSizing = 'border-box';
+            span.style.display = 'inline-block';
+            span.style.verticalAlign = 'middle';
+
+            // Specific tweaks for small controls like bonus inputs or totals
+            try {
+                if (el.classList && el.classList.contains('attr-bonus-input')) {
+                    span.style.minWidth = '46px';
+                    span.style.padding = '4px 6px';
+                    span.style.textAlign = 'center';
+                    span.style.fontSize = Math.max(12, baseFont - 2) + 'px';
+                } else if (el.classList && el.classList.contains('weapon-total')) {
+                    span.style.minWidth = '56px';
+                    span.style.padding = '4px 6px';
+                    span.style.textAlign = 'right';
+                } else if (el.tagName && el.tagName.toLowerCase() === 'textarea') {
+                    span.style.display = 'block';
+                    span.style.whiteSpace = 'pre-wrap';
+                    span.style.padding = '8px';
+                }
+            } catch (e) {}
+
+            return span;
+        };
+
+        // Inputs
+        clone.querySelectorAll('input, textarea, select').forEach(el => {
+            try {
+                let value = '';
+                if (el.tagName.toLowerCase() === 'select') {
+                    value = el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : el.value || '';
+                } else if (el.type === 'checkbox' || el.type === 'radio') {
+                    value = el.checked ? '✔' : '';
+                } else {
+                    value = el.value || '';
+                }
+
+                // Preserve some surrounding layout by wrapping replacements in a container
+                const replacement = replaceWithText(el, value);
+                el.parentNode && el.parentNode.replaceChild(replacement, el);
+            } catch (e) {}
+        });
+
+        // Improve visibility of small 'BONUS' labels and similar tiny UI text
+        clone.querySelectorAll('.attr-bonus-label').forEach(lbl => {
+            lbl.style.color = '#00f0ff';
+            lbl.style.fontWeight = '800';
+            lbl.style.fontSize = '12px';
+            lbl.style.letterSpacing = '0.06em';
+            lbl.style.display = 'block';
+            lbl.style.marginBottom = '4px';
+        });
+
+        // Remove decorative pseudo elements by clearing their attributes
+        clone.querySelectorAll('.section-box').forEach(sb => {
+            sb.style.clipPath = 'none';
+            sb.style.borderRadius = '0';
+        });
+
+        // Place the clone off-screen but visible so html2canvas can render it
+        clone.style.position = 'fixed';
+        clone.style.left = '-10000px';
+        clone.style.top = '0';
+        clone.style.zIndex = '99999';
+        document.body.appendChild(clone);
+
+        // Wait for layout
+        await new Promise(r => setTimeout(r, 40));
+
         const opts = {
-            scale: Math.min(2, window.devicePixelRatio || 1),
+            scale: Math.min(3, (window.devicePixelRatio || 1) * 1.5),
             useCORS: true,
             logging: false,
             backgroundColor: null,
-            scrollX: -window.scrollX,
-            scrollY: -window.scrollY,
-            windowWidth: document.documentElement.clientWidth,
-            windowHeight: document.documentElement.clientHeight
+            width: Math.ceil(clone.scrollWidth),
+            height: Math.ceil(clone.scrollHeight),
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: Math.ceil(clone.scrollWidth),
+            windowHeight: Math.ceil(clone.scrollHeight)
         };
 
-        const canvas = await html2canvas(target, opts);
+        const canvas = await html2canvas(clone, opts);
+        // remove the clone now that capture is done
+        clone.remove();
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
         const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
@@ -785,7 +884,7 @@ async function exportScreenshotPDF() {
             }
         }
 
-        const name = (document.getElementById('char_name')?.value || 'fiche') + '_screenshot.pdf';
+        const name = (document.getElementById('char_name')?.value || 'fiche') + '.pdf';
         pdf.save(name);
 
         // restore previously hidden elements
