@@ -819,7 +819,8 @@ async function exportScreenshotPDF() {
         });
 
         // Normalize clone layout, hide low-importance/footer elements and place it off-screen
-        clone.style.padding = '0';
+        // Add a small internal margin so the rendered image is not flush to the edges
+        clone.style.padding = '12px 14px';
         clone.style.margin = '0';
         clone.style.boxSizing = 'border-box';
         clone.style.overflow = 'hidden';
@@ -851,7 +852,7 @@ async function exportScreenshotPDF() {
                 const secRect = section.getBoundingClientRect();
                 const cloneRect = clone.getBoundingClientRect();
                 const bottomPx = Math.max(0, secRect.bottom - cloneRect.top);
-                const padPx = 8; // small padding after inventory
+                const padPx = 12; // small padding after inventory (matches clone padding)
                 const limitHeightPx = Math.ceil(bottomPx + padPx);
                 // Apply a hard cap to the clone so html2canvas only renders up to inventory
                 clone.style.height = limitHeightPx + 'px';
