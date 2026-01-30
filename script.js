@@ -714,5 +714,89 @@ function resetImage() {
     if (container) container.classList.remove('has-image');
 }
 
+// --- EXPORT VUE (SCREENSHOT) EN PDF ---
+async function exportScreenshotPDF() {
+    const btn = document.getElementById('screenshotPdfBtn');
+    try {
+        if (btn) { btn.disabled = true; btn.textContent = 'Génération...'; }
+        // Target the main sheet container so we don't capture page margins/borders
+        const target = document.getElementById('sheetRoot') || document.body;
+
+        // Hide elements that should not appear in the export (controls, overlays)
+        const hidden = [];
+        document.querySelectorAll('.no-print, .scanline').forEach(el => {
+            hidden.push({ el, vis: el.style.visibility });
+            el.style.visibility = 'hidden';
+        });
+
+        // Wait a tick so styles apply
+        await new Promise(r => setTimeout(r, 50));
+
+        // Use html2canvas to render the full element (including parts outside viewport)
+        const opts = {
+            scale: Math.min(2, window.devicePixelRatio || 1),
+            useCORS: true,
+            logging: false,
+            backgroundColor: null,
+            scrollX: -window.scrollX,
+            scrollY: -window.scrollY,
+            windowWidth: document.documentElement.clientWidth,
+            windowHeight: document.documentElement.clientHeight
+        };
+
+        const canvas = await html2canvas(target, opts);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+        const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidthMm = pageWidth;
+        const imgHeightMm = (imgProps.height * imgWidthMm) / imgProps.width;
+
+        if (imgHeightMm <= pageHeight) {
+            pdf.addImage(imgData, 'JPEG', 0, 0, imgWidthMm, imgHeightMm);
+        } else {
+            // If image is taller than a single page, split it into multiple pages
+            const pxPerMm = imgProps.width / imgWidthMm; // pixels per mm for this image
+            const canvasPageHeight = Math.floor(pageHeight * pxPerMm); // height in pixels per PDF page
+
+            let remainingHeight = canvas.height;
+            let sourceY = 0;
+            let first = true;
+            while (remainingHeight > 0) {
+                const sliceHeight = Math.min(canvasPageHeight, remainingHeight);
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = sliceHeight;
+                const ctx = pageCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, sourceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+                const pageData = pageCanvas.toDataURL('image/jpeg', 0.95);
+                const pageImgProps = pdf.getImageProperties(pageData);
+                const pageImgHeightMm = (pageImgProps.height * imgWidthMm) / pageImgProps.width;
+
+                if (!first) pdf.addPage();
+                pdf.addImage(pageData, 'JPEG', 0, 0, imgWidthMm, pageImgHeightMm);
+
+                remainingHeight -= sliceHeight;
+                sourceY += sliceHeight;
+                first = false;
+            }
+        }
+
+        const name = (document.getElementById('char_name')?.value || 'fiche') + '_screenshot.pdf';
+        pdf.save(name);
+
+        // restore previously hidden elements
+        hidden.forEach(item => { item.el.style.visibility = item.vis || ''; });
+    } catch (err) {
+        console.error(err);
+        alert('Erreur lors de la génération du PDF.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Exporter (screenshot PDF)'; }
+    }
+}
+
 
 
