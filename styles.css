@@ -27,7 +27,7 @@ input, textarea, select, button {
     font-size: 1rem; /* equals 18px due to html font-size above */
 }
 
-h1, h2, h3, .header-font {
+h1, h2, h3 {
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -72,10 +72,6 @@ textarea {
     resize: vertical;
     overflow: hidden;
     min-height: auto;
-}
-
-textarea.auto-expand {
-    height: auto;
 }
 
 /* --- TABLEAU --- */
@@ -299,12 +295,7 @@ input[type=number]::-webkit-outer-spin-button {
          classes map to different grid layouts on-screen; for print we
          enforce a simple single-column layout so content fits A4. */
       .grid-cols-1 { display: grid !important; grid-template-columns: repeat(1, 1fr) !important; gap: 10px !important; }
-      /* Print: place main left content and photo/side column side-by-side
-          (2fr / 1fr) so the photo appears next to the 'Renseignements Généraux' block. */
-    #main_grid { display: grid !important; grid-template-columns: 2fr 1fr !important; gap: 12px !important; align-items: start !important; }
-    /* Ensure the right column stacks its content with the photo first */
-    #main_grid > div:nth-child(2) { display: flex !important; flex-direction: column !important; }
-    #main_grid > div:nth-child(2) .char-img-placeholder { order: -1 !important; margin-bottom: 0.5rem !important; }
+        /* Print layout for multi-column grid removed (no `#main_grid` in markup) */
     .lg\:col-span-2 { grid-column: span 2 !important; }
     header { flex-direction: row !important; margin-bottom: 10px !important; padding-bottom: 5px !important; border-bottom: 2px solid black !important; }
     .space-y-6 > * + * { margin-top: 0.5rem !important; }
@@ -324,7 +315,6 @@ input[type=number]::-webkit-outer-spin-button {
          (some browsers disable background-images or clip complex shapes). */
      .char-img-placeholder { clip-path: none !important; border-radius: 0 !important; overflow: visible !important; }
      #imgPreview { background-image: none !important; display: block !important; }
-     #imgPreviewImg { display: block !important; visibility: visible !important; width: 100% !important; height: auto !important; max-height: 240px !important; object-fit: cover !important; }
      /* Ensure the clickable overlay label does not cover the image in print */
      .char-img-placeholder > label { display: none !important; }
      /* Put the preview on top for print and remove absolute positioning that can clip it */
@@ -332,10 +322,9 @@ input[type=number]::-webkit-outer-spin-button {
       /* Make the photo area more square on print: enforce 1:1 aspect ratio
           and constrain size so it doesn't stretch the layout. Center it. */
       .char-img-placeholder { aspect-ratio: 1 / 1 !important; max-width: 12rem !important; margin-left: auto !important; margin-right: auto !important; min-height: unset !important; }
-      #imgPreviewImg { aspect-ratio: 1 / 1 !important; max-height: 12rem !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
+    /* Removed `#imgPreviewImg` print rules (preview uses background-image on `#imgPreview`) */
 
     /* Photo will remain in the right column's normal flow (no absolute positioning). */
-    #main_grid { position: static !important; }
     .char-img-placeholder { position: static !important; width: 100% !important; height: auto !important; }
 }
 
