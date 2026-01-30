@@ -818,7 +818,20 @@ async function exportScreenshotPDF() {
             sb.style.borderRadius = '0';
         });
 
-        // Place the clone off-screen but visible so html2canvas can render it
+        // Normalize clone layout, hide low-importance/footer elements and place it off-screen
+        clone.style.padding = '0';
+        clone.style.margin = '0';
+        clone.style.boxSizing = 'border-box';
+        clone.style.overflow = 'hidden';
+
+        // Hide potential footers or copyright lines that add extra height
+        try {
+            clone.querySelectorAll('p').forEach(p => {
+                const t = (p.textContent || '').trim();
+                if (t.startsWith('©') || t.toLowerCase().includes('©')) p.style.display = 'none';
+            });
+        } catch (e) {}
+
         clone.style.position = 'fixed';
         clone.style.left = '-10000px';
         clone.style.top = '0';
@@ -828,8 +841,28 @@ async function exportScreenshotPDF() {
         // Wait for layout
         await new Promise(r => setTimeout(r, 40));
 
+        // If requested: stop capture after the inventory section by limiting clone height
+        try {
+            const marker = clone.querySelector('#weapons-container') || clone.querySelector('#inventory_row');
+            if (marker) {
+                // Find the nearest section element that contains the marker
+                const section = marker.closest('section') || marker;
+                // Compute bottom relative to the clone's content box
+                const secRect = section.getBoundingClientRect();
+                const cloneRect = clone.getBoundingClientRect();
+                const bottomPx = Math.max(0, secRect.bottom - cloneRect.top);
+                const padPx = 8; // small padding after inventory
+                const limitHeightPx = Math.ceil(bottomPx + padPx);
+                // Apply a hard cap to the clone so html2canvas only renders up to inventory
+                clone.style.height = limitHeightPx + 'px';
+            }
+        } catch (e) {
+            // ignore errors and render full clone
+        }
+
         const opts = {
-            scale: Math.min(3, (window.devicePixelRatio || 1) * 1.5),
+            // Slightly reduced scale to avoid tiny rounding overflow that creates an extra PDF page
+            scale: Math.min(3, (window.devicePixelRatio || 1) * 1.3),
             useCORS: true,
             logging: false,
             backgroundColor: null,
@@ -841,9 +874,60 @@ async function exportScreenshotPDF() {
             windowHeight: Math.ceil(clone.scrollHeight)
         };
 
-        const canvas = await html2canvas(clone, opts);
+        let canvas = await html2canvas(clone, opts);
+        // capture background color used for the clone so we can detect empty bottom rows
+        const cloneBg = clone.style.background || window.getComputedStyle(target).backgroundColor || '';
         // remove the clone now that capture is done
         clone.remove();
+
+        // Crop canvas to remove trailing empty/background-only rows at the bottom
+        try {
+            const parseRGB = (s) => {
+                const m = String(s).match(/rgba?\(([^)]+)\)/);
+                if (!m) return null;
+                const parts = m[1].split(',').map(p => Number(p.trim()));
+                return parts; // [r,g,b] or [r,g,b,a]
+            };
+            let bg = parseRGB(cloneBg);
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            const img = ctx.getImageData(0, 0, w, h);
+            const data = img.data;
+
+            // If cloneBg couldn't be parsed (transparent or complex background),
+            // fallback to sampling the top-left pixel of the rendered canvas as background.
+            if (!bg) {
+                const idx0 = 0; // pixel at (0,0)
+                bg = [data[idx0], data[idx0 + 1], data[idx0 + 2]];
+            }
+
+            const tol = 8; // tolerance for anti-aliasing / minor differences
+            let lastNonBgY = -1;
+            for (let y = h - 1; y >= 0; y--) {
+                let rowHasContent = false;
+                // sample horizontally with a stride to speed up scan on wide canvases
+                const stride = Math.max(1, Math.floor(w / 120));
+                for (let x = 0; x < w; x += stride) {
+                    const idx = (y * w + x) * 4;
+                    const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+                    if (a === 0) { rowHasContent = true; break; }
+                    if (Math.abs(r - bg[0]) > tol || Math.abs(g - bg[1]) > tol || Math.abs(b - bg[2]) > tol) { rowHasContent = true; break; }
+                }
+                if (rowHasContent) { lastNonBgY = y; break; }
+            }
+            if (lastNonBgY >= 0 && lastNonBgY < h - 1) {
+                const newH = lastNonBgY + 1;
+                const cropped = document.createElement('canvas');
+                cropped.width = w;
+                cropped.height = newH;
+                const cctx = cropped.getContext('2d');
+                cctx.drawImage(canvas, 0, 0, w, newH, 0, 0, w, newH);
+                canvas = cropped;
+            }
+        } catch (e) {
+            // if anything fails, fall back to original canvas
+            console.warn('Canvas cropping failed, using full canvas', e);
+        }
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
         const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
